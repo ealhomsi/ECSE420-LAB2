@@ -34,9 +34,9 @@ __device__ bool isCloseToZero(float value)
 }
 
 
-__global__ void gaussianEliminationKernel(float* matrix, bool *isDegenerate, unsigned dimension, float *b, float* x)
+__global__ void gaussianEliminationKernel(float* matrix, unsigned dimension, float *b, float* x, bool* isSingular)
 {
-	__shared__ unsigned swapWith;
+	__shared__ int swapWith;
 
 	unsigned responsibleRow = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -45,33 +45,39 @@ __global__ void gaussianEliminationKernel(float* matrix, bool *isDegenerate, uns
 		if (responsibleRow == pivotRow)
 		{
 			float pivot;
-			unsigned divisionRow = pivotRow-1;
+			swapWith = pivotRow-1;
 
 			do
 			{
-				divisionRow++;
-				pivot = matrix[divisionRow * dimension + pivotRow];
-				printf("%d -- %.2f\r\n", divisionRow, pivot);
-			} while (isCloseToZero(pivot) && divisionRow < dimension);
+				swapWith++;
+				pivot = matrix[swapWith * dimension + pivotRow];
+			} while (isCloseToZero(pivot) && swapWith < dimension);
 
-			swapWith = divisionRow;
-
-			for (unsigned col = pivotRow; col < dimension; col++)
+			if (swapWith < dimension)
 			{
-				matrix[col + divisionRow * dimension] /= pivot;
-			}
+				for (unsigned col = pivotRow; col < dimension; col++)
+				{
+					matrix[col + swapWith * dimension] /= pivot;
+				}
 
-			b[divisionRow] /= pivot;
+				b[swapWith] /= pivot;
+			}
+			else
+			{
+				*isSingular = true;
+			}
 
 			printMatrix(matrix, dimension);
 		}
 
 		__syncthreads();
 
-		if (swapWith != pivotRow)
+		if (swapWith >= dimension)
 		{
-			printf("Swap %d with %d\r\n", pivotRow, swapWith);
-
+			return;
+		} 
+		else if (swapWith != pivotRow)
+		{
 			// Swapping phase, each thread is responsible for one column
 			float temp = matrix[threadIdx.x + pivotRow * dimension];
 			matrix[threadIdx.x + pivotRow * dimension] = matrix[threadIdx.x + swapWith * dimension];
@@ -134,16 +140,20 @@ int main()
 	float* deviceMatrix;
 	float* deviceB;
 	float* deviceX;
+	bool* deviceSingular;
 
 	cudaMalloc((void**)& deviceMatrix, sizeof(matrix));
 	cudaMalloc((void**)& deviceB, sizeof(b));
 	cudaMalloc((void**)& deviceX, sizeof(b));
+	cudaMalloc((void**)& deviceSingular, sizeof(bool));
 
 	cudaMemcpy(deviceMatrix, matrix, sizeof(matrix), cudaMemcpyHostToDevice);
 	cudaMemcpy(deviceB, b, sizeof(b), cudaMemcpyHostToDevice);
 
-	gaussianEliminationKernel<<<1, matrixSize>>>(deviceMatrix, matrixSize, deviceB, deviceX);
+	gaussianEliminationKernel<<<1, matrixSize>>>(deviceMatrix, matrixSize, deviceB, deviceX, deviceSingular);
 
+	bool singular;
+	
 	cudaError_t cudaStatus = cudaDeviceSynchronize();
 
     // Add vectors in parallel.
@@ -152,10 +162,19 @@ int main()
         return 1;
     }
 
+	cudaMemcpy(&singular, deviceSingular, sizeof(bool), cudaMemcpyDeviceToHost);
 	cudaMemcpy(x, deviceX, sizeof(x), cudaMemcpyDeviceToHost);
 	
-	printf("{ %.2f, %.2f, %.2f }\r\n", x[0], x[1], x[2]);
+	if (singular)
+	{
+		printf("The matrix is not invertible, there is no unique solution.");
+	}
+	else
+	{
+		printf("{ %.2f, %.2f, %.2f }\r\n", x[0], x[1], x[2]);
+	}
 
+	cudaFree(deviceSingular);
 	cudaFree(deviceX);
 	cudaFree(deviceMatrix);
 	cudaFree(deviceB);
