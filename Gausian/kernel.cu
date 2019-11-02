@@ -8,7 +8,7 @@
 #include <stdio.h>
 
 
-__device__ void printMatrix(float *matrix, unsigned dimension)
+__device__ void printMatrix(float* matrix, float* b, unsigned dimension)
 {
 	printf("{\r\n");
 	for (unsigned row = 0; row < dimension; row++)
@@ -18,13 +18,12 @@ __device__ void printMatrix(float *matrix, unsigned dimension)
 		{
 			printf(" %.2f", matrix[column + row * dimension]);
 		}
-
-		printf("   }\r\n");
+		printf("| %.2f", b[row]);
+		printf(" }\r\n");
 	}
 
 	printf("}\r\n");
 }
-
 
 __device__ bool isCloseToZero(float value)
 {
@@ -70,7 +69,7 @@ __global__ void gaussianEliminationKernel(float* matrix, unsigned dimension, flo
 				*isSingular = true;
 			}
 
-			printMatrix(matrix, dimension);
+			//printMatrix(matrix, b, dimension);
 		}
 
 		__syncthreads();
@@ -99,7 +98,7 @@ __global__ void gaussianEliminationKernel(float* matrix, unsigned dimension, flo
 		
 			if (threadIdx.x == 0)
 			{
-				printMatrix(matrix, dimension);
+				//printMatrix(matrix, b, dimension);
 			}
 
 			__syncthreads();
@@ -122,7 +121,7 @@ __global__ void gaussianEliminationKernel(float* matrix, unsigned dimension, flo
 
 	if (threadIdx.x == 0)
 	{
-		printMatrix(matrix, dimension);
+		//printMatrix(matrix, b, dimension);
 	}
 
 	x[responsibleRow] = b[responsibleRow];
@@ -168,12 +167,12 @@ int main()
 	}
 	else
 	{
-		printf("{\n");
+		printf("\n{");
 		for (int i = 0; i < matrixSize; i++) {
 			float item = x[i];
-			printf("%.2f,", item);
+			printf("%.2f ", item);
 		}
-		printf("\n}\n");
+		printf("}\n");
 
 	}
 
