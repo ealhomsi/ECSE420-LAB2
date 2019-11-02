@@ -80,8 +80,9 @@
     <CudaCompile Include="kernel.cu" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="b.h" />
     <ClInclude Include="lodepng.h" />
-    <ClInclude Include="wm.h" />
+    <ClInclude Include="A.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

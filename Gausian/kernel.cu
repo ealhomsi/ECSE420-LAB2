@@ -1,6 +1,9 @@
 
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
+#include "A.h"
+#include "b.h"
+#include <string.h>
 
 #include <stdio.h>
 
@@ -127,27 +130,20 @@ __global__ void gaussianEliminationKernel(float* matrix, unsigned dimension, flo
 
 int main()
 {
-    const unsigned matrixSize = 3;
-	float matrix[matrixSize * matrixSize] = {
-		0, -4, 4,
-		2, 3, -3,
-		-2, -2, 1
-	};
-
-	float b[3] = { 5, -3, 2 };
-	float x[3] = { 0, 0, 0 };
+	const unsigned matrixSize = std::sqrt(sizeof(A) / sizeof(float));
+	float * x = new float[matrixSize];
 
 	float* deviceMatrix;
 	float* deviceB;
 	float* deviceX;
 	bool* deviceSingular;
 
-	cudaMalloc((void**)& deviceMatrix, sizeof(matrix));
+	cudaMalloc((void**)& deviceMatrix, sizeof(A));
 	cudaMalloc((void**)& deviceB, sizeof(b));
 	cudaMalloc((void**)& deviceX, sizeof(b));
 	cudaMalloc((void**)& deviceSingular, sizeof(bool));
 
-	cudaMemcpy(deviceMatrix, matrix, sizeof(matrix), cudaMemcpyHostToDevice);
+	cudaMemcpy(deviceMatrix, A, sizeof(A), cudaMemcpyHostToDevice);
 	cudaMemcpy(deviceB, b, sizeof(b), cudaMemcpyHostToDevice);
 
 	gaussianEliminationKernel<<<1, matrixSize>>>(deviceMatrix, matrixSize, deviceB, deviceX, deviceSingular);
@@ -163,21 +159,29 @@ int main()
     }
 
 	cudaMemcpy(&singular, deviceSingular, sizeof(bool), cudaMemcpyDeviceToHost);
-	cudaMemcpy(x, deviceX, sizeof(x), cudaMemcpyDeviceToHost);
+	cudaMemcpy(x, deviceX, matrixSize * sizeof(float), cudaMemcpyDeviceToHost);
 	
 	if (singular)
 	{
+		// this hsould never happen
 		printf("The matrix is not invertible, there is no unique solution.");
 	}
 	else
 	{
-		printf("{ %.2f, %.2f, %.2f }\r\n", x[0], x[1], x[2]);
+		printf("{\n");
+		for (int i = 0; i < matrixSize; i++) {
+			float item = x[i];
+			printf("%.2f,", item);
+		}
+		printf("\n}\n");
+
 	}
 
 	cudaFree(deviceSingular);
 	cudaFree(deviceX);
 	cudaFree(deviceMatrix);
 	cudaFree(deviceB);
+	delete[] x;
 
     // cudaDeviceReset must be called before exiting in order for profiling and
     // tracing tools such as Nsight and Visual Profiler to show complete traces.
