@@ -55,6 +55,7 @@
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
+      <PtxAsOptionV>true</PtxAsOptionV>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -78,11 +79,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="kernel.cu" />
-    <CudaCompile Include="rational.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="B.h" />
-    <ClInclude Include="lodepng.h" />
     <ClInclude Include="A.h" />
     <ClInclude Include="rational.h" />
   </ItemGroup>
