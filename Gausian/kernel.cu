@@ -8,7 +8,7 @@
 #include <stdio.h>
 
 
-__device__ void printMatrix(float* matrix, float* b, unsigned dimension)
+__device__ void printMatrix(double* matrix, double* b, unsigned dimension)
 {
 	printf("{\r\n");
 	for (unsigned row = 0; row < dimension; row++)
@@ -25,18 +25,18 @@ __device__ void printMatrix(float* matrix, float* b, unsigned dimension)
 	printf("}\r\n");
 }
 
-__device__ bool isCloseToZero(float value)
+__device__ bool isCloseToZero(double value)
 {
 	if (value < 0)
 	{
 		value = -value;
 	}
 
-	return value < 0.000000000001;
+	return value < 0.0000000001;
 }
 
 
-__global__ void gaussianEliminationKernel(float* matrix, unsigned dimension, float *b, float* x, bool* isSingular)
+__global__ void gaussianEliminationKernel(double* matrix, unsigned dimension, double *b, double* x, bool* isSingular)
 {
 	__shared__ int swapWith;
 
@@ -46,7 +46,7 @@ __global__ void gaussianEliminationKernel(float* matrix, unsigned dimension, flo
 	{
 		if (responsibleRow == pivotRow)
 		{
-			float pivot;
+			double pivot;
 			swapWith = pivotRow-1;
 
 			do
@@ -81,7 +81,7 @@ __global__ void gaussianEliminationKernel(float* matrix, unsigned dimension, flo
 		else if (swapWith != pivotRow)
 		{
 			// Swapping phase, each thread is responsible for one column
-			float temp = matrix[threadIdx.x + pivotRow * dimension];
+			double temp = matrix[threadIdx.x + pivotRow * dimension];
 			matrix[threadIdx.x + pivotRow * dimension] = matrix[threadIdx.x + swapWith * dimension];
 			matrix[threadIdx.x + swapWith * dimension] = temp;
 
@@ -89,24 +89,24 @@ __global__ void gaussianEliminationKernel(float* matrix, unsigned dimension, flo
 			
 			if (threadIdx.x == 0)
 			{
-				float temp = b[pivotRow];
+				double temp = b[pivotRow];
 				b[pivotRow] = b[swapWith];
 				b[swapWith] = temp;
 			}
 
 			__syncthreads();
 		
-			if (threadIdx.x == 0)
+			/*if (threadIdx.x == 0)
 			{
-				//printMatrix(matrix, b, dimension);
-			}
+				printMatrix(matrix, b, dimension);
+			}*/
 
 			__syncthreads();
 		}
 
 		if (responsibleRow != pivotRow)
 		{
-			float leadingValue = matrix[pivotRow + responsibleRow * dimension];
+			double leadingValue = matrix[pivotRow + responsibleRow * dimension];
 
 			for (unsigned col = pivotRow; col < dimension; col++)
 			{
@@ -119,22 +119,22 @@ __global__ void gaussianEliminationKernel(float* matrix, unsigned dimension, flo
 		__syncthreads();
 	}
 
-	if (threadIdx.x == 0)
+	/*if (threadIdx.x == 0)
 	{
-		//printMatrix(matrix, b, dimension);
-	}
+		printMatrix(matrix, b, dimension);
+	}*/
 
 	x[responsibleRow] = b[responsibleRow];
 }
 
 int main()
 {
-	const unsigned matrixSize = std::sqrt(sizeof(A) / sizeof(float));
-	float * x = new float[matrixSize];
+	const unsigned matrixSize = std::sqrt(sizeof(A) / sizeof(double));
+	double * x = new double[matrixSize];
 
-	float* deviceMatrix;
-	float* deviceB;
-	float* deviceX;
+	double* deviceMatrix;
+	double* deviceB;
+	double* deviceX;
 	bool* deviceSingular;
 
 	cudaMalloc((void**)& deviceMatrix, sizeof(A));
@@ -158,7 +158,7 @@ int main()
     }
 
 	cudaMemcpy(&singular, deviceSingular, sizeof(bool), cudaMemcpyDeviceToHost);
-	cudaMemcpy(x, deviceX, matrixSize * sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy(x, deviceX, matrixSize * sizeof(double), cudaMemcpyDeviceToHost);
 	
 	if (singular)
 	{
@@ -169,7 +169,7 @@ int main()
 	{
 		printf("\n{");
 		for (int i = 0; i < matrixSize; i++) {
-			float item = x[i];
+			double item = x[i];
 			printf("%.2f ", item);
 		}
 		printf("}\n");
