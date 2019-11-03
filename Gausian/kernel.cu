@@ -108,7 +108,7 @@ __device__ rational_t rational_reduced_form(long numerator, long denominator)
 rational_t rational_init(double x)
 {
 	long variable = 1;
-	while (dabs(round(x) - x) > 2.2204460492503131e-016)
+	while (dabs(round(x) - x) > 2.2204460492503130e-016)
 	{
 		x *= 10;
 		variable *= 10;
@@ -171,7 +171,12 @@ __device__ rational_t rational_divide(rational_t x, rational_t y)
 	return (1.0 * x.numerator) / x.denominator;
 }
 
-__device__ void printMatrix(double* matrix, double* b, unsigned dimension)
+ __device__ double get_value2(rational_t x) {
+	 return (1.0 * x.numerator) / x.denominator;
+ }
+
+
+__device__ void printMatrix(rational_t* matrix, rational_t* b, unsigned dimension)
 {
 	printf("{\r\n");
 	for (unsigned row = 0; row < dimension; row++)
@@ -179,9 +184,9 @@ __device__ void printMatrix(double* matrix, double* b, unsigned dimension)
 		printf("   {");
 		for (unsigned column = 0; column < dimension; column++)
 		{
-			printf(" %.2f", matrix[column + row * dimension]);
+			printf(" %.2f", get_value2(matrix[column + row * dimension]));
 		}
-		printf("| %.2f", b[row]);
+		printf("| %.2f", get_value2(b[row]));
 		printf(" }\r\n");
 	}
 
@@ -192,7 +197,6 @@ __device__ bool isCloseToZero(rational_t value)
 {
 	return value.numerator == 0;
 }
-
 
 __global__ void gaussianEliminationKernel(rational_t* matrix, unsigned dimension, rational_t* b, rational_t* x, bool* isSingular)
 {
@@ -227,7 +231,7 @@ __global__ void gaussianEliminationKernel(rational_t* matrix, unsigned dimension
 				*isSingular = true;
 			}
 
-			//printMatrix(matrix, b, dimension);
+			printMatrix(matrix, b, dimension);
 		}
 
 		__syncthreads();
@@ -254,10 +258,10 @@ __global__ void gaussianEliminationKernel(rational_t* matrix, unsigned dimension
 
 			__syncthreads();
 
-			/*if (threadIdx.x == 0)
+			if (threadIdx.x == 0)
 			{
 				printMatrix(matrix, b, dimension);
-			}*/
+			}
 
 			__syncthreads();
 		}
@@ -277,10 +281,10 @@ __global__ void gaussianEliminationKernel(rational_t* matrix, unsigned dimension
 		__syncthreads();
 	}
 
-	/*if (threadIdx.x == 0)
+	if (threadIdx.x == 0)
 	{
 		printMatrix(matrix, b, dimension);
-	}*/
+	}
 
 	x[responsibleRow] = b[responsibleRow];
 }
