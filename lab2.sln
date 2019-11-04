@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Convolution", "Convolution\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Gausian", "Gausian\Gausian.vcxproj", "{E6844135-A87F-4CAE-A847-A993482DA1F4}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MatrixMul", "MatrixMul\MatrixMul.vcxproj", "{88A47ED9-7F32-4592-8011-10171475146B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,10 @@ Global
 		{E6844135-A87F-4CAE-A847-A993482DA1F4}.Debug|x64.Build.0 = Debug|x64
 		{E6844135-A87F-4CAE-A847-A993482DA1F4}.Release|x64.ActiveCfg = Release|x64
 		{E6844135-A87F-4CAE-A847-A993482DA1F4}.Release|x64.Build.0 = Release|x64
+		{88A47ED9-7F32-4592-8011-10171475146B}.Debug|x64.ActiveCfg = Debug|x64
+		{88A47ED9-7F32-4592-8011-10171475146B}.Debug|x64.Build.0 = Debug|x64
+		{88A47ED9-7F32-4592-8011-10171475146B}.Release|x64.ActiveCfg = Release|x64
+		{88A47ED9-7F32-4592-8011-10171475146B}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
